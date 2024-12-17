@@ -1,0 +1,49 @@
+definition_version: '2'
+
+mixins:
+  snowpark_shared:
+    artifacts:
+      - dest: custom_functions
+        src: "dev"
+    stage: dev_deployment
+
+entities:
+
+  hello_function:
+    type: function
+    identifier:
+      name: hello_function
+    handler: customfunctions.functions.hello_function
+    signature:
+      - name: name
+        type: string
+    returns: string
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  perform_aggregation:
+    type: procedure
+    identifier:
+      name: perform_aggregation
+    handler: customfunctions.procedures.hello_procedure
+    signature: 
+      - name: "aggrequest"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  test_procedure:
+    type: procedure
+    identifier:
+      name: test_procedure
+    handler: customfunctions.procedures.test_procedure
+    signature: ''
+    returns: string
+    meta:
+      use_mixins:
+        - snowpark_shared
+

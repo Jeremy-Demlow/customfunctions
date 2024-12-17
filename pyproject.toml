@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["customfunctions/test"]
+python_files = "test_*.py"
+python_functions = "test_*"
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources.*:",
+    "ignore::DeprecationWarning:snowflake.*:",
+]

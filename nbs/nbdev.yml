@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "customfunctions"
+  site-url: "https://Jeremy-Demlow.github.io/customfunctions"
+  description: "Creating new udfs, udtf, streamlit apps this is a simple repo"
+  repo-branch: main
+  repo-url: "https://github.com/Jeremy-Demlow/customfunctions"
