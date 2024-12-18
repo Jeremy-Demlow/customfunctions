@@ -114,19 +114,30 @@ and functions.
 
 ### Creating a Fake Orders Table
 
-Navigate to the CUSTOM_FUNCTIONS/CUSTOM_FUNCTIONSelopment.ipynb notebook
-and run the cells to create a fake orders table in the CUSTOM_FUNCTIONS
-schema. This setup is essential for testing and
-CUSTOM_FUNCTIONSelopment.
+Navigate to the **dev/development.ipynb** notebook and run the cells to
+create a fake orders table in the CUSTOM_FUNCTIONS schema. This setup is
+essential for testing the procedure that you will create with this repo.
 
 > Note: Running the entire notebook will also perform an aggregation in
 > the CUSTOM_FUNCTIONS schema. You can defer this step if you prefer to
-> follow the next steps.
+> follow the next steps, but this is also showing how you can actually
+> develop locally and run everything before pushing this off to
+> snowflake.
 
 ### Testing Functions and Procedures
 
+> NOTE: pytest is included in the project. You can run the tests by
+> executing the following command, but this is not going to be 100%
+> coverage, but I did want to show that this can be done in this flow as
+> well. The deploy_snowpark.yaml in github/workflows will run the test
+> and if it fails you will want it to skip the deployment of the code.
+
+``` bash
+pytest -v
+```
+
 To test the functions and procedures, use the following commands in
-Snowsight or the Snowflake CLI:
+Snowflake CLI or in Snowsight:
 
 ``` bash
 # Run Function
