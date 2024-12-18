@@ -1,8 +1,8 @@
-CALL customfunctions.DEV.PERFORM_AGGREGATION(
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.PERFORM_AGGREGATION(
 '{
     "request_id": "AGG_001",
-    "source_table": "customfunctions.dev.orders",
-    "target_table": "customfunctions.dev.orders_aggregates",
+    "source_table": "datascience.customfunctions.orders",
+    "target_table": "datascience.customfunctions.orders_aggregates",
     "group_by": ["PRODUCT_CATEGORY", "REGION"],
     "metrics": [
         {"name": "TOTAL_SALES", "function": "sum", "column": "SALES_AMOUNT"},

@@ -4,7 +4,7 @@ mixins:
   snowpark_shared:
     artifacts:
       - dest: custom_functions
-        src: "dev"
+        src: ""
     stage: dev_deployment
 
 entities:
@@ -26,9 +26,23 @@ entities:
     type: procedure
     identifier:
       name: perform_aggregation
-    handler: customfunctions.procedures.hello_procedure
+    handler: customfunctions.procedures.perform_aggregation
     signature: 
       - name: "aggrequest"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  hello_procedure:
+    type: procedure
+    identifier:
+      name: hello_procedure
+    handler: customfunctions.procedures.hello_procedure
+    signature: 
+      - name: "name"
         type: "string"
     returns: string
     execute_as_caller: true

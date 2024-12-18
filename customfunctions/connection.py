@@ -41,9 +41,32 @@ class SnowflakeConnection(BaseModel):
     warehouse: str = "DS_WH_XS"
     database: Optional[str] = None
     schema: Optional[str] = None
-
-    # Session cache keyed by (role, warehouse, database)
+    query_tag: Optional[Dict[str, Any]] = None
     _session_cache: Dict[Tuple[str, str, Optional[str]], Session] = {}
+
+    def _get_default_query_tag(self) -> Dict[str, Any]:
+        """Get default query tag if none is provided."""
+        return {
+            "origin": "snowpark_session",
+            "name": self.user,
+            "version": {
+                "major": 1,
+                "minor": 0
+            },
+            "attributes": {
+                "source": self.database or "DATASCIENCE",
+                "warehouse": self.warehouse,
+                "role": self.role
+            }
+        }
+
+    def _set_query_tag(self, session: Session, custom_tag: Optional[Dict[str, Any]] = None) -> None:
+        """Set query tag for the session."""
+        try:
+            session.query_tag = custom_tag if custom_tag is not None else self._get_default_query_tag()
+            logger.info(f"Set query tag: {session.query_tag}")
+        except Exception as e:
+            logger.warning(f"Failed to set query tag: {str(e)}")
 
     @field_validator("private_key_path", mode="before")
     def ensure_path_object(cls, v):
@@ -117,16 +140,10 @@ class SnowflakeConnection(BaseModel):
             "warehouse": warehouse or self.warehouse,
         }
 
-        # Add optional parameters if provided
         if database or self.database:
             params["database"] = database or self.database
         if schema or self.schema:
             params["schema"] = schema or self.schema
-
-        # Handle authentication methods in priority order:
-        # 1. External authenticator (e.g., OAuth)
-        # 2. Key pair authentication
-        # 3. Password authentication
         if self.authenticator:
             params["authenticator"] = self.authenticator
         elif self.private_key_pem or self.private_key_path:
@@ -147,7 +164,8 @@ class SnowflakeConnection(BaseModel):
         warehouse: Optional[str] = None,
         database: Optional[str] = None,
         schema: Optional[str] = None,
-        use_cache: bool = True
+        use_cache: bool = True,
+        query_tag: Optional[Dict[str, Any]] = None
     ) -> Session:
         """
         Get or create a Snowflake session.
@@ -158,6 +176,7 @@ class SnowflakeConnection(BaseModel):
             database: Override default database
             schema: Override default schema
             use_cache: Whether to use session caching (default True)
+            query_tag: Optional custom query tag
             
         Returns:
             Session: A Snowflake session object
@@ -166,21 +185,25 @@ class SnowflakeConnection(BaseModel):
         final_warehouse = warehouse or self.warehouse
         final_database = database or self.database
         
-        # Try to get cached session if caching is enabled
         if use_cache:
             cache_key = (final_role, final_warehouse, final_database)
             if cache_key in self._session_cache:
                 session = self._session_cache[cache_key]
-                if schema:  # Update schema if needed
+                if schema:
                     session.use_schema(schema)
+                # Set query tag even for cached sessions
+                self._set_query_tag(session, query_tag or self.query_tag)
                 return session
 
         # Create new session
         params = self.get_connection_params(final_role, final_warehouse, final_database, schema)
         try:
             session = Session.builder.configs(params).create()
+            logger.info(f"Created new session for {final_role}, {final_warehouse}, {final_database}")
             
-            # Cache if enabled
+            # Set query tag for new session
+            self._set_query_tag(session, query_tag or self.query_tag)
+            
             if use_cache:
                 cache_key = (final_role, final_warehouse, final_database)
                 self._session_cache[cache_key] = session

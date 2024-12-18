@@ -1,5 +1,7 @@
 snowflake-snowpark-python
 pydantic
-nbdev
 cryptography
-SQLAlchemy==1.4.51
+nbdev
+fastcore>=1.5.27
+setuptools
+pyyaml
