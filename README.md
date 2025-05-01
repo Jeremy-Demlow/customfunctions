@@ -88,7 +88,7 @@ def match_erp_to_bank(session: Session,
                      output_table: str,
                      date_variance: int = 3) -> str:
     # Rule 1: Exact match on date + amount + account
-    rule1_sql = f"""
+    rule1_```sql = f"""
     SELECT 
         e.TRANSACTION_ID as ERP_TRANSACTION_ID,
         b.TRANSACTION_ID as BANK_TRANSACTION_ID,
@@ -100,7 +100,7 @@ def match_erp_to_bank(session: Session,
     """
     
     # Rule 3: Date within variance + amount + account
-    date_variance_sql = f"""
+    date_variance_```sql = f"""
     SELECT 
         # ... fields
         (1.0 - ({day_diff} * 0.1)) as MATCH_CONFIDENCE,
@@ -126,8 +126,8 @@ def generate_reconciliation_report(session: Session,
                                  cc_table: str,
                                  output_table: str,
                                  as_of_date: str = None) -> str:
-    # Account summary SQL
-    account_summary_sql = f"""
+    # Account summary ```sql
+    account_summary_```sql = f"""
     SELECT
         ea.ACCOUNT_NUMBER,
         ea.ACCOUNT_NAME,
@@ -157,8 +157,8 @@ def identify_reconciliation_exceptions(session: Session,
                                      bank_match_table: str,
                                      cc_match_table: str,
                                      output_table: str) -> str:
-    # Create SQL to identify exceptions
-    exceptions_sql = f"""
+    # Create ```sql to identify exceptions
+    exceptions_```sql = f"""
     SELECT
         uuid_string() as EXCEPTION_ID,
         ACCOUNT_NUMBER,
@@ -201,7 +201,7 @@ def ml_enhanced_matching(session: Session,
     4. Apply model to new transaction pairs
     """
     # Create feature vectors from transaction pairs
-    feature_sql = f"""
+    feature_```sql = f"""
     SELECT
         -- Features encoding transaction similarity
         ABS(DATEDIFF('DAY', e.TRANSACTION_DATE_STD, b.TRANSACTION_DATE_STD)) as DATE_DIFF,
@@ -238,7 +238,7 @@ def detect_transaction_anomalies(session: Session,
     3. Flag outliers based on configurable thresholds
     """
     # Example implementation using isolation forest algorithm
-    anomaly_detection_sql = f"""
+    anomaly_detection_```sql = f"""
     WITH transaction_features AS (
         SELECT
             TRANSACTION_ID,
@@ -309,7 +309,7 @@ def generate_cash_flow_forecast(session: Session,
     4. Generate probabilistic cash flow projections
     """
     # Time series feature extraction
-    time_features_sql = f"""
+    time_features_```sql = f"""
     WITH daily_cash_flow AS (
         SELECT
             TRANSACTION_DATE_STD as DATE,
@@ -350,6 +350,235 @@ def generate_cash_flow_forecast(session: Session,
 - Real-time reconciliation capabilities
 - Mobile exception management
 
+# Running the Financial Matching Pipeline in Snowflake
+
+After you’ve added the financial matching code to your project and
+deployed it to Snowflake, you have two main ways to run it:
+
+## 1. Running the Entire Pipeline
+
+The RUN_FINANCIAL_MATCHING procedure orchestrates the entire financial
+matching process from start to finish. This is the easiest way to run a
+complete matching cycle.
+
+``` sql
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.RUN_FINANCIAL_MATCHING(
+'{
+    "num_transactions": 10000,
+    "error_rate": 0.1,
+    "date_range_start": "2023-01-01",
+    "date_range_end": "2023-12-31",
+    "table_prefix": "FINMATCH",
+    "run_id": "TEST_RUN_001"
+}'
+);
+
+This single call performs all these operations:
+
+1. Generates synthetic financial data across ERP, bank, and credit card systems
+1. Standardizes all transaction data for matching
+1. Runs the matching algorithms for both bank and credit card transactions
+1. Creates a reconciliation report showing matched and unmatched items
+1. Identifies exceptions that need investigation
+
+The procedure accepts a JSON configuration object with these parameters:
+
+- num_transactions: How many base transactions to generate
+- error_rate: Probability of introducing data discrepancies (0-1)
+- date_range_start and date_range_end: Date range for generated transactions
+- table_prefix: Prefix for all tables created by the pipeline
+- run_id: Unique identifier for this run (helpful for tracking multiple runs)
+- as_of_date (optional): For point-in-time reconciliation
+
+The procedure returns a JSON summary of the entire execution, including statistics from each step.
+
+## 2. Running Individual Components
+
+For more granular control or when working with real data instead of generated test data, you can call each procedure individually:
+
+### Step 1: Generate Test Data (for testing only)
+
+```sql
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.FINANCIAL_DATA_GENERATOR(
+    10000,    -- Number of transactions
+    0.1,      -- Error rate (0.1 = 10%)
+    '2023-01-01',  -- Start date
+    '2023-12-31',  -- End date
+    'ERP_TRANSACTIONS',  -- Output table for ERP data
+    'BANK_TRANSACTIONS', -- Output table for bank data
+    'CC_TRANSACTIONS'    -- Output table for credit card data
+);
+```
+
+### Step 2: Standardize Data
+
+For each data source, you need to standardize the transactions:
+
+``` sql
+-- Standardize ERP transactions
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.STANDARDIZE_ERP_TRANSACTIONS(
+    'ERP_TRANSACTIONS',        -- Input table
+    'ERP_TRANSACTIONS_STD'     -- Output table
+);
+
+-- Standardize bank transactions
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.STANDARDIZE_BANK_TRANSACTIONS(
+    'BANK_TRANSACTIONS',       -- Input table
+    'BANK_TRANSACTIONS_STD'    -- Output table
+);
+
+-- Standardize credit card transactions
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.STANDARDIZE_CC_TRANSACTIONS(
+    'CC_TRANSACTIONS',         -- Input table
+    'CC_TRANSACTIONS_STD'      -- Output table
+);
+```
+
+### Step 3: Match Transactions
+
+Run the matching algorithms to identify matching transactions:
+
+``` sql
+
+-- Match ERP to bank transactions
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.MATCH_ERP_TO_BANK(
+    'ERP_TRANSACTIONS_STD',    -- Standardized ERP table
+    'BANK_TRANSACTIONS_STD',   -- Standardized bank table
+    'BANK_MATCHES',            -- Output table for matches
+    3                          -- Date variance allowed (days)
+);
+
+-- Match ERP to credit card transactions
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.MATCH_ERP_TO_CREDIT_CARD(
+    'ERP_TRANSACTIONS_STD',    -- Standardized ERP table
+    'CC_TRANSACTIONS_STD',     -- Standardized credit card table
+    'CC_MATCHES',              -- Output table for matches
+    5                          -- Date variance allowed (days)
+);
+```
+
+### Step 4: Generate Reconciliation Report
+
+Create a comprehensive reconciliation report:
+
+``` sql
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.GENERATE_RECONCILIATION_REPORT(
+    'BANK_MATCHES',           -- Bank matches table
+    'CC_MATCHES',             -- Credit card matches table
+    'ERP_TRANSACTIONS_STD',   -- Standardized ERP table
+    'BANK_TRANSACTIONS_STD',  -- Standardized bank table
+    'CC_TRANSACTIONS_STD',    -- Standardized credit card table
+    'RECON_REPORT',           -- Output table for report
+    NULL                      -- As-of date (NULL for current)
+);
+```
+
+### Step 5: Identify Exceptions
+
+Find reconciliation exceptions that need investigation:
+
+``` sql
+CALL DATASCIENCE.CUSTOM_FUNCTIONS.IDENTIFY_RECONCILIATION_EXCEPTIONS(
+    'RECON_REPORT',    -- Reconciliation report table
+    'BANK_MATCHES',    -- Bank matches table
+    'CC_MATCHES',      -- Credit card matches table
+    'EXCEPTIONS'       -- Output table for exceptions
+);
+```
+
+# Querying and Analyzing Results
+
+After running the pipeline, you’ll have several tables to analyze: \##
+View Reconciliation Status by Account
+
+``` sql
+-- For a full pipeline run:
+SELECT 
+    ACCOUNT_NUMBER,
+    ACCOUNT_NAME,
+    BANK_NAME,
+    ERP_TOTAL,
+    BANK_TOTAL,
+    DIFFERENCE,
+    RECONCILIATION_STATUS
+FROM FINMATCH_RECON_REPORT_TEST_RUN_001
+ORDER BY ABS(DIFFERENCE) DESC;
+
+-- For individual component runs:
+SELECT 
+    ACCOUNT_NUMBER,
+    ACCOUNT_NAME,
+    BANK_NAME,
+    ERP_TOTAL,
+    BANK_TOTAL,
+    DIFFERENCE,
+    RECONCILIATION_STATUS
+FROM RECON_REPORT
+ORDER BY ABS(DIFFERENCE) DESC;
+```
+
+## View Match Statistics
+
+``` sql
+-- View bank match statistics
+SELECT 
+    MATCH_STATUS,
+    COUNT(*) as MATCH_COUNT,
+    AVG(MATCH_CONFIDENCE) as AVG_CONFIDENCE
+FROM FINMATCH_BANK_MATCHES_TEST_RUN_001
+GROUP BY MATCH_STATUS
+ORDER BY MATCH_STATUS;
+
+-- View credit card match statistics
+SELECT 
+    MATCH_STATUS,
+    COUNT(*) as MATCH_COUNT,
+    AVG(MATCH_CONFIDENCE) as AVG_CONFIDENCE
+FROM FINMATCH_CC_MATCHES_TEST_RUN_001
+GROUP BY MATCH_STATUS
+ORDER BY MATCH_STATUS;
+
+## View High-Priority Exceptions
+
+```sql
+-- View high-priority exceptions
+SELECT 
+    EXCEPTION_ID,
+    ACCOUNT_NUMBER,
+    ACCOUNT_NAME,
+    EXCEPTION_TYPE,
+    EXCEPTION_CATEGORY,
+    RECOMMENDED_ACTION
+FROM FINMATCH_EXCEPTIONS_TEST_RUN_001
+WHERE PRIORITY = 'HIGH'
+ORDER BY EXCEPTION_TYPE;
+View Unmatched Transactions
+```
+
+``` sql
+-- View large unmatched bank transactions
+SELECT 
+    b.TRANSACTION_ID,
+    b.TRANSACTION_DATE_STD,
+    b.AMOUNT_STD,
+    b.DESCRIPTION,
+    b.ACCOUNT_NUMBER_STD,
+    b.BANK_NAME
+FROM FINMATCH_BANK_STD_TEST_RUN_001 b
+WHERE NOT EXISTS (
+    SELECT 1 FROM FINMATCH_BANK_MATCHES_TEST_RUN_001 m
+    WHERE m.BANK_TRANSACTION_ID = b.TRANSACTION_ID
+)
+AND ABS(b.AMOUNT_STD) > 1000
+ORDER BY ABS(b.AMOUNT_STD) DESC
+LIMIT 20;
+```
+
+These queries help you analyze the reconciliation results, understand
+the match quality, and identify the exceptions that need further
+investigation. You can adapt them to your specific needs and integrate
+them into dashboards or reports for regular reconciliation reviews.
+
 # Setup and Deployment Guide
 
 ## 1. Installing Snowflake CLI
@@ -376,57 +605,52 @@ CLI](https://docs.snowflake.com/en/CUSTOM_FUNCTIONSeloper-guide/snowflake-cli-v2
 ## 3. Setting Up Your Database and Schema
 
 You can use the Snowsight UI or the Snowflake CLI to execute the
-following SQL commands. While the code example uses the ACCOUNTADMIN
-role for simplicity, you should use a role with the appropriate
-permissions in your environment.
+following \`\`\`sql commands. While the code example uses the
+ACCOUNTADMIN role for simplicity, you should use a role with the
+appropriate permissions in your environment.
 
-> **NOTE**: The following SQL commands create a new role, grant the
-> necessary permissions, and set up a warehouse and schema for the
+> **NOTE**: The following \`\`\`sql commands create a new role, grant
+> the necessary permissions, and set up a warehouse and schema for the
 > Snowpark project. You can adjust the code based on your requirements.
 > You don’t need to grat all the permissions to the role, but this is a
 > good starting point.
 
-``` sql
-ALTER SESSION SET query_tag = '{"team":"Solutions","name":"JeremyDemlow", "version":0.1, "attributes":{"medium":"setup", "source":"DATASCIENCE", "purpose": "setup"}}';
+\`\`\`\`\`\`sql ALTER SESSION SET query_tag =
+‘{“team”:“Solutions”,“name”:“JeremyDemlow”, “version”:0.1,
+“attributes”:{“medium”:“setup”, “source”:“DATASCIENCE”, “purpose”:
+“setup”}}’;
 
-USE ROLE ACCOUNTADMIN;
-CREATE ROLE DATA_SCIENTIST;
+USE ROLE ACCOUNTADMIN; CREATE ROLE DATA_SCIENTIST;
 
-USE ROLE SYSADMIN;
-GRANT CREATE DATABASE ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT CREATE COMPUTE POOL ON ACCOUNT TO ROLE DATA_SCIENTIST;
+USE ROLE SYSADMIN; GRANT CREATE DATABASE ON ACCOUNT TO ROLE
+DATA_SCIENTIST; GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE
+DATA_SCIENTIST; GRANT CREATE COMPUTE POOL ON ACCOUNT TO ROLE
+DATA_SCIENTIST;
 
-USE ROLE ACCOUNTADMIN;
-GRANT CREATE INTEGRATION ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT MONITOR USAGE ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT EXECUTE MANAGED TASK ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT BIND SERVICE ENDPOINT ON ACCOUNT TO ROLE DATA_SCIENTIST;
-GRANT IMPORTED PRIVILEGES ON DATABASE snowflake TO ROLE DATA_SCIENTIST;
-SET my_user_var = (SELECT  '"' || CURRENT_USER() || '"' );
-GRANT ROLE data_scientist TO USER identifier($my_user_var);
+USE ROLE ACCOUNTADMIN; GRANT CREATE INTEGRATION ON ACCOUNT TO ROLE
+DATA_SCIENTIST; GRANT MONITOR USAGE ON ACCOUNT TO ROLE DATA_SCIENTIST;
+GRANT EXECUTE MANAGED TASK ON ACCOUNT TO ROLE DATA_SCIENTIST; GRANT BIND
+SERVICE ENDPOINT ON ACCOUNT TO ROLE DATA_SCIENTIST; GRANT IMPORTED
+PRIVILEGES ON DATABASE snowflake TO ROLE DATA_SCIENTIST; SET my_user_var
+= (SELECT ‘“’ \|\| CURRENT_USER() \|\| ‘“’ ); GRANT ROLE data_scientist
+TO USER identifier(\$my_user_var);
 
 USE ROLE DATA_SCIENTIST;
 
-CREATE OR REPLACE WAREHOUSE DS_WH_XS
-  WAREHOUSE_SIZE = XSMALL
-  AUTO_SUSPEND = 120
-  AUTO_RESUME = TRUE;
+CREATE OR REPLACE WAREHOUSE DS_WH_XS WAREHOUSE_SIZE = XSMALL
+AUTO_SUSPEND = 120 AUTO_RESUME = TRUE;
 
-CREATE DATABASE DATASCIENCE; 
-CREATE SCHEMA DATASCIENCE;
-USE SCHEMA DATASCIENCE;
-```
+CREATE DATABASE DATASCIENCE; CREATE SCHEMA DATASCIENCE; USE SCHEMA
+DATASCIENCE;
 
-## 4. Initializing and Deploying the Snowpark Project
 
-### Creating a Boilerplate
+    ## 4. Initializing and Deploying the Snowpark Project
 
-To set up a boilerplate Snowpark project, use the following command:
+    ### Creating a Boilerplate
+    To set up a boilerplate Snowpark project, use the following command:
 
-``` bash
-snow init custom_functions --template example_snowpark
-```
+    ```bash
+    snow init custom_functions --template example_snowpark
 
 > Note: This will create a boilerplate for you. In this example,
 > adjustments were made to move all the files from the default ‘app/’
