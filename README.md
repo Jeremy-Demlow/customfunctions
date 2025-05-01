@@ -372,33 +372,40 @@ CALL DATASCIENCE.CUSTOM_FUNCTIONS.RUN_FINANCIAL_MATCHING(
     "run_id": "TEST_RUN_001"
 }'
 );
+```
 
-This single call performs all these operations:
+## This single call performs all these operations:
 
-1. Generates synthetic financial data across ERP, bank, and credit card systems
-1. Standardizes all transaction data for matching
-1. Runs the matching algorithms for both bank and credit card transactions
-1. Creates a reconciliation report showing matched and unmatched items
-1. Identifies exceptions that need investigation
+1.  Generates synthetic financial data across ERP, bank, and credit card
+    systems
+2.  Standardizes all transaction data for matching
+3.  Runs the matching algorithms for both bank and credit card
+    transactions
+4.  Creates a reconciliation report showing matched and unmatched items
+5.  Identifies exceptions that need investigation
 
-The procedure accepts a JSON configuration object with these parameters:
+## The procedure accepts a JSON configuration object with these parameters:
 
 - num_transactions: How many base transactions to generate
 - error_rate: Probability of introducing data discrepancies (0-1)
-- date_range_start and date_range_end: Date range for generated transactions
+- date_range_start and date_range_end: Date range for generated
+  transactions
 - table_prefix: Prefix for all tables created by the pipeline
-- run_id: Unique identifier for this run (helpful for tracking multiple runs)
+- run_id: Unique identifier for this run (helpful for tracking multiple
+  runs)
 - as_of_date (optional): For point-in-time reconciliation
 
-The procedure returns a JSON summary of the entire execution, including statistics from each step.
+The procedure returns a JSON summary of the entire execution, including
+statistics from each step.
 
 ## 2. Running Individual Components
 
-For more granular control or when working with real data instead of generated test data, you can call each procedure individually:
+For more granular control or when working with real data instead of
+generated test data, you can call each procedure individually:
 
 ### Step 1: Generate Test Data (for testing only)
 
-```sql
+``` sql
 CALL DATASCIENCE.CUSTOM_FUNCTIONS.FINANCIAL_DATA_GENERATOR(
     10000,    -- Number of transactions
     0.1,      -- Error rate (0.1 = 10%)
@@ -605,12 +612,12 @@ CLI](https://docs.snowflake.com/en/CUSTOM_FUNCTIONSeloper-guide/snowflake-cli-v2
 ## 3. Setting Up Your Database and Schema
 
 You can use the Snowsight UI or the Snowflake CLI to execute the
-following \`\`\`sql commands. While the code example uses the
-ACCOUNTADMIN role for simplicity, you should use a role with the
-appropriate permissions in your environment.
+following sql commands. While the code example uses the ACCOUNTADMIN
+role for simplicity, you should use a role with the appropriate
+permissions in your environment.
 
-> **NOTE**: The following \`\`\`sql commands create a new role, grant
-> the necessary permissions, and set up a warehouse and schema for the
+> **NOTE**: The following sql commands create a new role, grant the
+> necessary permissions, and set up a warehouse and schema for the
 > Snowpark project. You can adjust the code based on your requirements.
 > You don’t need to grat all the permissions to the role, but this is a
 > good starting point.
