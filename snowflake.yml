@@ -61,3 +61,129 @@ entities:
       use_mixins:
         - snowpark_shared
 
+  financial_data_generator:
+      type: procedure
+      identifier:
+        name: financial_data_generator
+      handler: customfunctions.financial_matching.generate_financial_data
+      signature: 
+        - name: "num_transactions"
+          type: "float"
+        - name: "error_rate"
+          type: "float"
+        - name: "date_range_start"
+          type: "string"
+        - name: "date_range_end"
+          type: "string"
+        - name: "erp_table"
+          type: "string"
+        - name: "bank_table"
+          type: "string"
+        - name: "credit_card_table"
+          type: "string"
+      returns: string
+      execute_as_caller: true
+      meta:
+        use_mixins:
+          - snowpark_shared
+
+  match_erp_to_bank:
+    type: procedure
+    identifier:
+      name: match_erp_to_bank
+    handler: customfunctions.financial_matching.match_erp_to_bank
+    signature: 
+      - name: "erp_table"
+        type: "string"
+      - name: "bank_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+      - name: "date_variance"
+        type: "float"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  match_erp_to_credit_card:
+    type: procedure
+    identifier:
+      name: match_erp_to_credit_card
+    handler: customfunctions.financial_matching.match_erp_to_credit_card
+    signature: 
+      - name: "erp_table"
+        type: "string"
+      - name: "cc_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+      - name: "date_variance"
+        type: "float"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  generate_reconciliation_report:
+    type: procedure
+    identifier:
+      name: generate_reconciliation_report
+    handler: customfunctions.financial_matching.generate_reconciliation_report
+    signature: 
+      - name: "bank_match_table"
+        type: "string"
+      - name: "cc_match_table"
+        type: "string"
+      - name: "erp_table"
+        type: "string"
+      - name: "bank_table"
+        type: "string"
+      - name: "cc_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+      - name: "as_of_date"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  identify_reconciliation_exceptions:
+    type: procedure
+    identifier:
+      name: identify_reconciliation_exceptions
+    handler: customfunctions.financial_matching.identify_reconciliation_exceptions
+    signature: 
+      - name: "recon_report_table"
+        type: "string"
+      - name: "bank_match_table"
+        type: "string"
+      - name: "cc_match_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  run_financial_matching:
+    type: procedure
+    identifier:
+      name: run_financial_matching
+    handler: customfunctions.financial_matching.run_financial_matching_pipeline
+    signature: 
+      - name: "config"
+        type: "object"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
