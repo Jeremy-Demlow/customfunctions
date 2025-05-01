@@ -495,8 +495,9 @@ CALL DATASCIENCE.CUSTOM_FUNCTIONS.IDENTIFY_RECONCILIATION_EXCEPTIONS(
 
 # Querying and Analyzing Results
 
-After running the pipeline, you’ll have several tables to analyze: \##
-View Reconciliation Status by Account
+After running the pipeline, you’ll have several tables to analyze:
+
+## View Reconciliation Status by Account
 
 ``` sql
 -- For a full pipeline run:
@@ -544,10 +545,11 @@ SELECT
 FROM FINMATCH_CC_MATCHES_TEST_RUN_001
 GROUP BY MATCH_STATUS
 ORDER BY MATCH_STATUS;
+```
 
 ## View High-Priority Exceptions
 
-```sql
+``` sql
 -- View high-priority exceptions
 SELECT 
     EXCEPTION_ID,
@@ -559,8 +561,9 @@ SELECT
 FROM FINMATCH_EXCEPTIONS_TEST_RUN_001
 WHERE PRIORITY = 'HIGH'
 ORDER BY EXCEPTION_TYPE;
-View Unmatched Transactions
 ```
+
+## View Unmatched Transactions
 
 ``` sql
 -- View large unmatched bank transactions

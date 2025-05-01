@@ -1436,6 +1436,15 @@ def run_financial_matching_pipeline(session: Session,
     Returns:
         str: Summary of the pipeline execution
     """
+    if isinstance(config, str):
+        try:
+            config = json.loads(config)
+        except json.JSONDecodeError:
+            raise ValueError("Invalid JSON string provided for config")
+    
+    if not isinstance(config, dict):
+        raise TypeError("Config must be a dictionary or a JSON string")
+
     # Extract configuration parameters
     num_transactions = config.get("num_transactions", 10000)
     error_rate = config.get("error_rate", 0.1)

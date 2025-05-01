@@ -68,7 +68,7 @@ entities:
       handler: customfunctions.financial_matching.generate_financial_data
       signature: 
         - name: "num_transactions"
-          type: "float"
+          type: "number"
         - name: "error_rate"
           type: "float"
         - name: "date_range_start"
@@ -100,7 +100,7 @@ entities:
       - name: "output_table"
         type: "string"
       - name: "date_variance"
-        type: "float"
+        type: "number"
     returns: string
     execute_as_caller: true
     meta:
@@ -120,7 +120,7 @@ entities:
       - name: "output_table"
         type: "string"
       - name: "date_variance"
-        type: "float"
+        type: "number"
     returns: string
     execute_as_caller: true
     meta:
@@ -173,6 +173,54 @@ entities:
       use_mixins:
         - snowpark_shared
 
+  standardize_erp_transactions:
+    type: procedure
+    identifier:
+      name: standardize_erp_transactions
+    handler: customfunctions.financial_matching.standardize_erp_transactions
+    signature: 
+      - name: "input_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  standardize_bank_transactions:
+    type: procedure
+    identifier:
+      name: standardize_bank_transactions
+    handler: customfunctions.financial_matching.standardize_bank_transactions
+    signature: 
+      - name: "input_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
+  standardize_cc_transactions:
+    type: procedure
+    identifier:
+      name: standardize_cc_transactions
+    handler: customfunctions.financial_matching.standardize_cc_transactions
+    signature: 
+      - name: "input_table"
+        type: "string"
+      - name: "output_table"
+        type: "string"
+    returns: string
+    execute_as_caller: true
+    meta:
+      use_mixins:
+        - snowpark_shared
+
   run_financial_matching:
     type: procedure
     identifier:
@@ -180,7 +228,7 @@ entities:
     handler: customfunctions.financial_matching.run_financial_matching_pipeline
     signature: 
       - name: "config"
-        type: "object"
+        type: "string"
     returns: string
     execute_as_caller: true
     meta:
