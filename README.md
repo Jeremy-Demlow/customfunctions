@@ -58,8 +58,9 @@ def generate_financial_data(session: Session,
 The standardization process creates consistent data formats for
 matching:
 
-``` pytho
-ndef standardize_erp_transactions(session: Session, input_table: str, output_table: str) -> str:
+``` python
+
+def standardize_erp_transactions(session: Session, input_table: str, output_table: str) -> str:
     # Standardize transaction date to DATE type
     df = df.with_column("TRANSACTION_DATE_STD", to_date(col("TRANSACTION_DATE")))
     
